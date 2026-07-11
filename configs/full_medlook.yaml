@@ -1,34 +1,36 @@
-# Ablation: full_medlook. Identical data mix to short_sft.yaml / process_sft.yaml --
-# only `profile` differs -- isolating the effect of the full [STRATEGY] + [PROCESS] +
-# [FINAL] schema. This is the primary MedLook configuration.
-#
-# Disclaimer: research prototype only. Not for clinical use, diagnosis, or treatment decisions.
+# Shared high-quality MVP data mix. Profile = full_medlook (STRATEGY+PROCESS+FINAL).
+# Run: python scripts/prepare_data.py --config configs/full_medlook.yaml
+# Prerequisite: python scripts/build_gold_strategy_set.py
+# Disclaimer: research prototype only. Not for clinical use.
 
 name: full_medlook
-profile: full_medlook # [STRATEGY] + optional [PROCESS] + [FINAL]
+profile: full_medlook
 
 data:
   open_vqa:
     mode: huggingface
     hf_sources: [vqa_rad, pathvqa, slake]
     hf_split: train
-    hf_limit: null
+    hf_limit: 700
   meissa:
     enabled: true
     mode: huggingface
     hf_split: train
-    hf_limit: null
+    hf_limit: 1500
   uncertainty:
     enabled: true
     blur_radius: 6.0
     crop_fraction: 0.5
+    max_bases: 600
+    max_image_side: 384
   curriculum:
     weights:
-      open_vqa: 0.475
-      meissa: 0.325
-      uncertainty: 0.2
+      open_vqa: 0.45
+      meissa: 0.30
+      uncertainty: 0.25
     val_fraction: 0.1
     seed: 3407
+    target_size: 3500
   gold_strategy_set:
     json_path: data/gold_strategy_set.json
     image_dir: data/gold_strategy_set_images

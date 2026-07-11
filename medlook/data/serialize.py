@@ -35,9 +35,11 @@ def _serialize_sample(sample: dict, images_dir: str, split_name: str, sample_idx
         out_content = []
         for item in message["content"]:
             if item["type"] == "image":
-                filename = f"{split_name}_{sample_idx:06d}_{image_idx:02d}.png"
+                # JPEG keeps the prepared dataset far smaller than PNG (critical on
+                # disk-constrained machines writing thousands of medical images).
+                filename = f"{split_name}_{sample_idx:06d}_{image_idx:02d}.jpg"
                 path = os.path.join(images_dir, filename)
-                item["image"].convert("RGB").save(path)
+                item["image"].convert("RGB").save(path, format="JPEG", quality=85, optimize=True)
                 out_content.append({"type": "image_path", "path": path})
                 image_idx += 1
             else:

@@ -1,10 +1,10 @@
-# Shared high-quality MVP data mix. Profile = process_sft ([PROCESS]+[FINAL]).
-# Run: python scripts/prepare_data.py --config configs/process_sft.yaml
+# Alias / docs pointer: same mix as configs/full_medlook.yaml (MVP-sized).
+# Prefer: python scripts/prepare_data.py --config configs/full_medlook.yaml
 # Prerequisite: python scripts/build_gold_strategy_set.py
 # Disclaimer: research prototype only. Not for clinical use.
 
-name: process_sft
-profile: process_sft
+name: prepare_mvp
+profile: full_medlook
 
 data:
   open_vqa:
@@ -34,7 +34,7 @@ data:
   gold_strategy_set:
     json_path: data/gold_strategy_set.json
     image_dir: data/gold_strategy_set_images
-  output_dir: outputs/data/process_sft
+  output_dir: outputs/data/mvp_full_medlook
 
 model:
   base_model: unsloth/medgemma-1.5-4b-it-unsloth-bnb-4bit
@@ -65,7 +65,7 @@ train:
   weight_decay: 0.01
   lr_scheduler_type: cosine
   seed: 3407
-  output_dir: /content/drive/MyDrive/medlook_runs/process_sft
+  output_dir: /content/drive/MyDrive/medlook_runs/full_medlook
   save_strategy: steps
   save_steps: 100
   save_total_limit: 4

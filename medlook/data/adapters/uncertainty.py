@@ -62,24 +62,56 @@ class UncertaintyAdapter(Adapter):
             yield _make_conflicting_hint_record(ex, self._blur_radius)
 
     @classmethod
-    def from_open_vqa_records(cls, records: Iterable, **kwargs) -> "UncertaintyAdapter":
-        """Build clean examples directly from already-converted `open_vqa` Records, so
-        the SAME base images/questions get their degraded counterparts -- this is what
-        makes the pairing meaningful rather than coincidental."""
-        clean_examples = []
+    def from_open_vqa_records(
+        cls,
+        records: Iterable,
+        blur_radius: float = 6.0,
+        crop_fraction: float = 0.5,
+        max_bases: int | None = 750,
+        seed: int = 3407,
+        max_image_side: int = 512,
+    ) -> "UncertaintyAdapter":
+        """Build clean examples from already-converted `open_vqa` Records.
+
+        Caps the number of base examples (`max_bases`) and downsizes images so the
+        4x expansion (clean/blur/crop/conflict) does not OOM on a 16GB laptop when
+        open_vqa itself has thousands of full-resolution medical images.
+        """
+        import random
+
+        candidates = []
         for r in records:
             if not r.images:
                 continue
+            candidates.append(r)
+
+        if max_bases is not None and len(candidates) > max_bases:
+            rng = random.Random(seed)
+            candidates = rng.sample(candidates, max_bases)
+
+        clean_examples = []
+        for r in candidates:
             clean_examples.append(
                 RawCleanExample(
                     id=r.id,
-                    image=r.images[0],
+                    image=_prepare_image(r.images[0], max_side=max_image_side),
                     question=r.question,
                     answer=r.final_answer,
                     source=r.source,
                 )
             )
-        return cls(clean_examples, **kwargs)
+        return cls(clean_examples, blur_radius=blur_radius, crop_fraction=crop_fraction)
+
+
+def _prepare_image(img: Image.Image, max_side: int = 512) -> Image.Image:
+    """RGB copy, optionally downsized -- keeps uncertainty synth memory-bounded."""
+    out = img.convert("RGB")
+    w, h = out.size
+    longest = max(w, h)
+    if longest > max_side:
+        scale = max_side / float(longest)
+        out = out.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.BILINEAR)
+    return out
 
 
 def _make_clean_record(ex: RawCleanExample) -> Record:

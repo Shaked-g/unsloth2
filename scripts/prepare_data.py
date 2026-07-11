@@ -76,6 +76,7 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
     stats: dict = {"config": config_path, "profile": profile, "adapters": {}}
 
     # --- open_vqa (primary, always required to be available) ---
+    print("[prepare] stage: open_vqa", flush=True)
     open_vqa_adapter = _build_open_vqa_adapter(data_cfg["open_vqa"])
     open_vqa_available = open_vqa_adapter.is_available()
     if not open_vqa_available:
@@ -86,9 +87,15 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
         )
     open_vqa_records = list(open_vqa_adapter.iter_records())
     open_vqa_filtered, open_vqa_filter_stats = data_filter.apply_quality_filters(open_vqa_records)
+    print(f"[prepare] open_vqa: {len(open_vqa_records)} raw -> {len(open_vqa_filtered)} filtered", flush=True)
+    # Drop the unfiltered list; images are large and we only need the filtered pool.
+    del open_vqa_records
+    import gc
+
+    gc.collect()
     stats["adapters"]["open_vqa"] = {
         "available": open_vqa_available,
-        "raw_count": len(open_vqa_records),
+        "raw_count": open_vqa_filter_stats.total_in,
         "filter": open_vqa_filter_stats.to_dict(),
     }
 
@@ -97,6 +104,7 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
     meissa_enabled = meissa_cfg.get("enabled", True)
     meissa_filtered: List[Record] = []
     if meissa_enabled:
+        print("[prepare] stage: meissa", flush=True)
         meissa_adapter = _build_meissa_adapter(meissa_cfg)
         meissa_available = meissa_adapter.is_available()
         if not meissa_available:
@@ -108,12 +116,14 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
             )
         meissa_records = list(meissa_adapter.iter_records())
         meissa_filtered, meissa_filter_stats = data_filter.apply_quality_filters(meissa_records)
+        print(f"[prepare] meissa: {len(meissa_records)} raw -> {len(meissa_filtered)} filtered", flush=True)
         stats["adapters"]["meissa"] = {
             "available": meissa_available,
             "raw_count": len(meissa_records),
             "filter": meissa_filter_stats.to_dict(),
         }
     else:
+        print("[prepare] stage: meissa (disabled)", flush=True)
         stats["adapters"]["meissa"] = {"available": False, "raw_count": 0, "filter": None}
 
     # --- uncertainty (anti-shortcut, derived from open_vqa's filtered records) ---
@@ -121,14 +131,22 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
     unc_enabled = unc_cfg.get("enabled", True)
     uncertainty_filtered: List[Record] = []
     if unc_enabled:
+        print("[prepare] stage: uncertainty", flush=True)
         uncertainty_adapter = UncertaintyAdapter.from_open_vqa_records(
             open_vqa_filtered,
             blur_radius=unc_cfg.get("blur_radius", 6.0),
             crop_fraction=unc_cfg.get("crop_fraction", 0.5),
+            max_bases=unc_cfg.get("max_bases", 750),
+            seed=data_cfg.get("curriculum", {}).get("seed", 3407),
+            max_image_side=unc_cfg.get("max_image_side", 512),
         )
         uncertainty_records = list(uncertainty_adapter.iter_records())
         uncertainty_filtered, uncertainty_filter_stats = data_filter.apply_quality_filters(
             uncertainty_records
+        )
+        print(
+            f"[prepare] uncertainty: {len(uncertainty_records)} raw -> {len(uncertainty_filtered)} filtered",
+            flush=True,
         )
         stats["adapters"]["uncertainty"] = {
             "available": uncertainty_adapter.is_available(),
@@ -136,6 +154,7 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
             "filter": uncertainty_filter_stats.to_dict(),
         }
     else:
+        print("[prepare] stage: uncertainty (disabled)", flush=True)
         stats["adapters"]["uncertainty"] = {"available": False, "raw_count": 0, "filter": None}
 
     # --- gold strategy set: held out, used ONLY to build the decontamination
@@ -143,6 +162,7 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
     gold_cfg = data_cfg.get("gold_strategy_set")
     eval_text_grams, eval_image_hashes = set(), set()
     if gold_cfg:
+        print("[prepare] stage: gold strategy set / decontam signature", flush=True)
         gold_cases = load_gold_strategy_set(gold_cfg["json_path"], gold_cfg["image_dir"])
         texts = [f"{c.question} {c.gold_answer}" for c in gold_cases]
         images_list = [c.images for c in gold_cases]
@@ -153,9 +173,11 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
             "num_cases": len(gold_cases),
             "action_distribution": action_distribution(gold_cases),
         }
+        print(f"[prepare] gold cases: {len(gold_cases)}", flush=True)
 
     # --- decontamination against the gold set (and, in the real pipeline, held-out
     #     eval subsets of VQA-RAD/SLAKE/PathVQA) ---
+    print("[prepare] stage: decontamination", flush=True)
     records_by_adapter_raw = {
         "open_vqa": open_vqa_filtered,
         "meissa": meissa_filtered,
@@ -172,15 +194,18 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
             kept, report = recs, decontaminate.DecontaminationReport(total_checked=len(recs))
         records_by_adapter[name] = kept
         stats["decontamination"][name] = report.to_dict()
+        print(f"[prepare] decontam {name}: {len(recs)} -> {len(kept)}", flush=True)
 
     # --- curriculum mixing + stratified split ---
+    print("[prepare] stage: curriculum mix + split", flush=True)
     curriculum_cfg = data_cfg.get("curriculum", {})
     config = curriculum.CurriculumConfig(
         weights=curriculum_cfg.get("weights", dict(curriculum.DEFAULT_WEIGHTS)),
         val_fraction=curriculum_cfg.get("val_fraction", 0.1),
         seed=curriculum_cfg.get("seed", 3407),
     )
-    mixed = curriculum.mix_records(records_by_adapter, config)
+    target_size = curriculum_cfg.get("target_size")
+    mixed = curriculum.mix_records(records_by_adapter, config, target_size=target_size)
     train_records, val_records = curriculum.stratified_split(
         mixed, val_fraction=config.val_fraction, seed=config.seed
     )
@@ -195,6 +220,7 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
         "weights_configured": config.weights,
         "val_fraction": config.val_fraction,
         "seed": config.seed,
+        "target_size": target_size,
         "train_size": len(train_records),
         "val_size": len(val_records),
         "train_action_histogram": train_action_hist,
@@ -205,6 +231,7 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
     }
 
     # --- convert + serialize ---
+    print("[prepare] stage: convert + serialize", flush=True)
     train_samples = convert.records_to_unsloth_dataset(train_records, profile=profile)
     val_samples = convert.records_to_unsloth_dataset(val_records, profile=profile)
     train_path = serialize.save_dataset_jsonl(train_samples, output_dir, "train")

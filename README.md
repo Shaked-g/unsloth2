@@ -41,11 +41,12 @@ itself is correct and ready for a real Colab run.
 
 1. Accept the [MedGemma license](https://huggingface.co/google/medgemma-1.5-4b-it) and
    get a Hugging Face token.
-2. Push this repo somewhere Colab can fetch it (or upload it to Drive).
-3. Open `notebooks/colab_train_eval.ipynb` on a GPU runtime (L4 or A100 preferred) and
-   run the cells in order. It mounts Drive, prepares data, runs a multi-image packing
-   smoke test, trains Short-SFT and Full-MedLook (Process-SFT optional), generates real
-   predictions, and runs the real four-system evaluation report.
+2. Open `notebooks/colab_train_eval.ipynb` on a GPU runtime (L4 or A100 preferred).
+3. The notebook clones **https://github.com/Shaked-g/unsloth2**, builds the gold strategy
+   set if needed, prepares the ~4k MVP mix to Drive, trains, evaluates, and exports.
+
+Store your HF token as a Colab secret named `HF_TOKEN` (or paste via getpass). Never
+commit tokens into the repo.
 
 ## Repository layout
 

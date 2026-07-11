@@ -59,7 +59,7 @@ class OpenVQAAdapter(Adapter):
             process = _process_for_relook(raw.question) if label.action == Action.RELOOK else None
             yield Record(
                 id=raw.id,
-                images=[raw.image.convert("RGB")],
+                images=[raw.image if getattr(raw.image, "mode", None) == "RGB" else _rgb_maybe_resize(raw.image)],
                 question=raw.question,
                 strategy=strategy,
                 final_answer=raw.answer,
@@ -111,23 +111,38 @@ class OpenVQAAdapter(Adapter):
         raw_records: List[RawVQARecord] = []
         for source in sources:
             hf_id = HF_SOURCES[source]
+            print(f"[open_vqa] Loading {hf_id} split={split!r} ...", flush=True)
             try:
                 ds = datasets.load_dataset(hf_id, split=split)
-            except Exception:
+            except Exception as exc:
+                print(f"[open_vqa] FAILED {source}: {type(exc).__name__}: {exc}", flush=True)
                 continue
             if limit is not None:
                 ds = ds.select(range(min(limit, len(ds))))
+            print(f"[open_vqa] {source}: taking {len(ds)} examples", flush=True)
             for i, row in enumerate(ds):
                 raw_records.append(
                     RawVQARecord(
                         id=f"{source}_{i}",
                         source=source,
-                        image=row["image"],
+                        image=_rgb_maybe_resize(row["image"]),
                         question=row["question"],
                         answer=str(row["answer"]),
                     )
                 )
+        print(f"[open_vqa] total raw records: {len(raw_records)}", flush=True)
         return cls(raw_records)
+
+
+def _rgb_maybe_resize(image: Image.Image, max_side: int = 512) -> Image.Image:
+    """Keep training images RGB and memory-bounded for Colab/laptop prep."""
+    out = image.convert("RGB")
+    w, h = out.size
+    longest = max(w, h)
+    if longest > max_side:
+        scale = max_side / float(longest)
+        out = out.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.BILINEAR)
+    return out
 
 
 def _process_for_relook(question: str) -> str:

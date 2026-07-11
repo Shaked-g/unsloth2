@@ -1,39 +1,38 @@
-# Ablation: short_sft. Same underlying data mix as process_sft.yaml / full_medlook.yaml
-# -- only `profile` differs -- so the four-system comparison isolates the effect of the
-# output schema itself, not a difference in underlying questions/answers/images.
-#
-# Target for the minimal-viable-experiment pass: set hf_limit to something like 700 per
-# source (~2-4k total after mixing) before committing to the full run (hf_limit: null).
-#
-# Disclaimer: research prototype only. Not for clinical use, diagnosis, or treatment decisions.
+# Shared high-quality MVP data mix. Profile = short_sft ([FINAL] only).
+# Run: python scripts/prepare_data.py --config configs/short_sft.yaml
+# Prerequisite: python scripts/build_gold_strategy_set.py
+# Disclaimer: research prototype only. Not for clinical use.
 
 name: short_sft
-profile: short_sft # [FINAL] only, no [STRATEGY] or [PROCESS]
+profile: short_sft
 
 data:
   open_vqa:
     mode: huggingface
     hf_sources: [vqa_rad, pathvqa, slake]
     hf_split: train
-    hf_limit: null # set to ~700 for the minimal-viable-experiment pass
+    hf_limit: 700
   meissa:
     enabled: true
     mode: huggingface
     hf_split: train
-    hf_limit: null
+    hf_limit: 1500
   uncertainty:
     enabled: true
     blur_radius: 6.0
     crop_fraction: 0.5
+    max_bases: 600
+    max_image_side: 384
   curriculum:
     weights:
-      open_vqa: 0.475
-      meissa: 0.325
-      uncertainty: 0.2
+      open_vqa: 0.45
+      meissa: 0.30
+      uncertainty: 0.25
     val_fraction: 0.1
     seed: 3407
+    target_size: 3500
   gold_strategy_set:
-    json_path: data/gold_strategy_set.json # human-authored, see gold_strategy_set.py
+    json_path: data/gold_strategy_set.json
     image_dir: data/gold_strategy_set_images
   output_dir: outputs/data/short_sft
 

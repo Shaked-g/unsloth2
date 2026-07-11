@@ -10,6 +10,7 @@ htmlcov/
 # Generated data / run artifacts (never commit prepared datasets or checkpoints)
 outputs/
 data/gold_strategy_set_images/
+!data/gold_strategy_set.json
 *.jsonl
 
 # Colab / Drive mounts, large model files

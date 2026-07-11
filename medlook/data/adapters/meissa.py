@@ -90,32 +90,50 @@ class MeissaAdapter(Adapter):
     ) -> "MeissaAdapter":
         """Attempt to download `CYX1998/Meissa-SFT` and filter to the interleaved-
         images framework. Returns an empty (unavailable) adapter on ANY failure --
-        this source is optional enrichment, never a hard dependency."""
+        this source is optional enrichment, never a hard dependency.
+
+        Scans row-by-row (with early stop at `limit`) instead of a full-dataset
+        `.filter(...)` pass -- the latter can hang for a long time on large Hub
+        datasets with no progress output.
+        """
         try:
             import datasets
 
+            print(f"[meissa] Loading CYX1998/Meissa-SFT split={split!r} ...", flush=True)
             ds = datasets.load_dataset("CYX1998/Meissa-SFT", split=split)
-            ds = ds.filter(lambda x: x["meta"]["framework"] == "interleaved_thinking_images")
-            if limit is not None:
-                ds = ds.select(range(min(limit, len(ds))))
-        except Exception:
+            print(f"[meissa] Loaded {len(ds)} raw rows; scanning for interleaved_thinking_images ...", flush=True)
+        except Exception as exc:
+            print(f"[meissa] unavailable ({type(exc).__name__}: {exc})", flush=True)
             return cls([])
 
-        raw_samples = []
-        for i, row in enumerate(ds):
-            try:
-                images = list(row["images"])
-            except Exception:
-                images = []
-            meta = row.get("meta", {}) or {}
-            raw_samples.append(
-                RawMeissaSample(
-                    id=str(meta.get("idx", f"meissa_{i}")),
-                    source_dataset=meta.get("dataset", "meissa"),
-                    conversations=row["conversations"],
-                    images=images,
+        raw_samples: List[RawMeissaSample] = []
+        try:
+            for i, row in enumerate(ds):
+                meta = row.get("meta", {}) or {}
+                if meta.get("framework") != "interleaved_thinking_images":
+                    continue
+                try:
+                    images = list(row["images"])
+                except Exception:
+                    images = []
+                if not images:
+                    continue
+                raw_samples.append(
+                    RawMeissaSample(
+                        id=str(meta.get("idx", f"meissa_{i}")),
+                        source_dataset=meta.get("dataset", "meissa"),
+                        conversations=row["conversations"],
+                        images=images,
+                    )
                 )
-            )
+                if limit is not None and len(raw_samples) >= limit:
+                    break
+                if len(raw_samples) % 200 == 0 and len(raw_samples) > 0:
+                    print(f"[meissa] kept {len(raw_samples)} (scanned {i + 1}) ...", flush=True)
+        except Exception as exc:
+            print(f"[meissa] scan failed ({type(exc).__name__}: {exc}); returning {len(raw_samples)} kept", flush=True)
+
+        print(f"[meissa] ready with {len(raw_samples)} samples", flush=True)
         return cls(raw_samples)
 
 
