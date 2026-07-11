@@ -9,9 +9,10 @@ htmlcov/
 
 # Generated data / run artifacts (never commit prepared datasets or checkpoints)
 outputs/
-data/gold_strategy_set_images/
-!data/gold_strategy_set.json
 *.jsonl
+
+# Gold strategy *images* are committed so Colab clones work without a rebuild.
+# (JSON is always committed; prepared train/val datasets stay local/Drive-only.)
 
 # Colab / Drive mounts, large model files
 *.gguf

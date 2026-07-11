@@ -100,10 +100,20 @@ class MeissaAdapter(Adapter):
             import datasets
 
             print(f"[meissa] Loading CYX1998/Meissa-SFT split={split!r} ...", flush=True)
-            ds = datasets.load_dataset("CYX1998/Meissa-SFT", split=split)
+            # verification_mode avoids DatasetGenerationError on some Hub mirrors where
+            # post-load checksum/image decode verification fails after a successful download.
+            try:
+                ds = datasets.load_dataset(
+                    "CYX1998/Meissa-SFT",
+                    split=split,
+                    verification_mode="no_checks",
+                )
+            except TypeError:
+                ds = datasets.load_dataset("CYX1998/Meissa-SFT", split=split)
             print(f"[meissa] Loaded {len(ds)} raw rows; scanning for interleaved_thinking_images ...", flush=True)
         except Exception as exc:
             print(f"[meissa] unavailable ({type(exc).__name__}: {exc})", flush=True)
+            print("[meissa] Continuing without Meissa (open_vqa + uncertainty still work).", flush=True)
             return cls([])
 
         raw_samples: List[RawMeissaSample] = []

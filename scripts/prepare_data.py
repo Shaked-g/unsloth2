@@ -163,7 +163,36 @@ def run(config_path: str, output_dir_override: str = None) -> dict:
     eval_text_grams, eval_image_hashes = set(), set()
     if gold_cfg:
         print("[prepare] stage: gold strategy set / decontam signature", flush=True)
-        gold_cases = load_gold_strategy_set(gold_cfg["json_path"], gold_cfg["image_dir"])
+        gold_json = gold_cfg["json_path"]
+        gold_img_dir = gold_cfg["image_dir"]
+        gold_imgs_ok = (
+            os.path.isdir(gold_img_dir)
+            and any(
+                f.lower().endswith((".png", ".jpg", ".jpeg"))
+                for f in os.listdir(gold_img_dir)
+            )
+        )
+        if not (os.path.exists(gold_json) and gold_imgs_ok):
+            print(
+                "[prepare] gold JSON and/or images missing -- rebuilding via "
+                "scripts/build_gold_strategy_set.py ...",
+                flush=True,
+            )
+            import subprocess
+
+            subprocess.check_call(
+                [
+                    sys.executable,
+                    os.path.join(os.path.dirname(__file__), "build_gold_strategy_set.py"),
+                    "--per-action",
+                    "50",
+                    "--out-json",
+                    gold_json,
+                    "--out-image-dir",
+                    gold_img_dir,
+                ]
+            )
+        gold_cases = load_gold_strategy_set(gold_json, gold_img_dir)
         texts = [f"{c.question} {c.gold_answer}" for c in gold_cases]
         images_list = [c.images for c in gold_cases]
         eval_text_grams, eval_image_hashes = decontaminate.build_eval_signature_from_texts_images(
