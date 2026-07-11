@@ -1,0 +1,36 @@
+[
+  {
+    "conversations": [
+      {"from": "human", "value": "<image>\nWhat abnormality is visible in the marked region?"},
+      {"from": "function_call", "value": "<think>The lesion border is unclear at this resolution, I should zoom in.</think>\n{\"name\": \"ZoomInSubfigure\", \"arguments\": {\"region\": \"center\"}}"},
+      {"from": "observation", "value": "{\"result\": \"cropped_region_returned\"}"},
+      {"from": "gpt", "value": "<think>After zooming in, the mass has irregular, spiculated margins consistent with a malignant-appearing nodule.</think>\n[FINAL] There is a spiculated nodule with irregular margins."}
+    ],
+    "system": "You are a medical assistant with access to tools for visual analysis.",
+    "tools": "[{\"name\": \"ZoomInSubfigure\", \"description\": \"Zoom into a named region of the current image.\"}]",
+    "images": ["crop_circle.png"],
+    "meta": {"framework": "interleaved_thinking_images", "dataset": "pathvqa", "idx": "pathvqa_fixture_0001"}
+  },
+  {
+    "conversations": [
+      {"from": "human", "value": "<image>\nIs the mediastinum widened?"},
+      {"from": "gpt", "value": "<think>The mediastinal contour is clearly within normal limits at first glance, no further inspection needed.</think>\n[FINAL] No, the mediastinum is not widened."}
+    ],
+    "system": "You are a medical assistant with access to tools for visual analysis.",
+    "tools": "[{\"name\": \"ZoomInSubfigure\", \"description\": \"Zoom into a named region of the current image.\"}]",
+    "images": ["clean_square.png"],
+    "meta": {"framework": "interleaved_thinking_images", "dataset": "vqa_rad", "idx": "vqa_rad_fixture_0002"}
+  },
+  {
+    "conversations": [
+      {"from": "human", "value": "<image>\nDescribe the tissue pattern and note if a second region should be compared."},
+      {"from": "function_call", "value": "<think>The pattern near the edges looks different from the center; I should segment and compare both regions.</think>\n{\"name\": \"SegmentRegion\", \"arguments\": {\"region\": \"edge\"}}"},
+      {"from": "observation", "value": "{\"result\": \"segmented_region_returned\"}"},
+      {"from": "gpt", "value": "<think>The edge region shows denser cellularity than the center, indicating a heterogeneous proliferative pattern.</think>\n[FINAL] The tissue shows a heterogeneous proliferative pattern, denser at the edges than the center."}
+    ],
+    "system": "You are a medical assistant with access to tools for visual analysis.",
+    "tools": "[{\"name\": \"SegmentRegion\", \"description\": \"Segment a named region of the current image.\"}]",
+    "images": ["crop_cross.png"],
+    "meta": {"framework": "interleaved_thinking_images", "dataset": "pathvqa", "idx": "pathvqa_fixture_0003"}
+  }
+]

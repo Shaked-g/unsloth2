@@ -1,0 +1,44 @@
+[
+  {
+    "id": "openvqa_0001",
+    "source": "vqa_rad",
+    "image": "clean_circle.png",
+    "question": "Is there a nodule present?",
+    "answer": "yes"
+  },
+  {
+    "id": "openvqa_0002",
+    "source": "vqa_rad",
+    "image": "clean_square.png",
+    "question": "Is the heart enlarged?",
+    "answer": "no"
+  },
+  {
+    "id": "openvqa_0003",
+    "source": "pathvqa",
+    "image": "clean_cross.png",
+    "question": "What abnormality is visible in this pathology slide and how does it relate to the surrounding tissue architecture?",
+    "answer": "A poorly differentiated infiltrating lesion is visible, disrupting the normal glandular architecture."
+  },
+  {
+    "id": "openvqa_0004",
+    "source": "slake",
+    "image": "crop_circle.png",
+    "question": "How many lesions are visible, and what is their relative size compared to each other?",
+    "answer": "Two lesions are visible; the anterior one is roughly twice the size of the posterior one."
+  },
+  {
+    "id": "openvqa_0005",
+    "source": "vqa_rad",
+    "image": "clean_square.png",
+    "question": "What organ is shown in this image?",
+    "answer": "lung"
+  },
+  {
+    "id": "openvqa_0006",
+    "source": "pathvqa",
+    "image": "crop_cross.png",
+    "question": "Compare the cellular density in the left and right regions and explain the likely diagnostic implication.",
+    "answer": "The left region shows markedly higher cellular density than the right, suggesting a focal proliferative process."
+  }
+]

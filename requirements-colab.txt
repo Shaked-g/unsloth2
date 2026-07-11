@@ -1,0 +1,18 @@
+# Extra dependencies needed ONLY for real training/evaluation on Colab (L4/A100 preferred).
+# Install requirements.txt first, then this file, inside the Colab runtime.
+# Pinned ranges verified against Unsloth v2026.6.x compatibility metadata (see PROJECT_BLUEPRINT.md
+# Section 8). Re-verify if Unsloth has moved on since.
+# Disclaimer: research prototype only. Not for clinical use, diagnosis, or treatment decisions.
+
+unsloth
+unsloth_zoo>=2026.6.7
+torch>=2.4.0,<2.11.0
+torchvision
+xformers>=0.0.27.post2
+transformers>=4.51.3,<=5.5.0,!=4.52.0,!=4.52.1,!=4.52.2,!=4.52.3,!=4.53.0,!=4.54.0,!=4.55.0,!=4.55.1,!=4.57.0,!=4.57.4,!=4.57.5,!=5.0.0,!=5.1.0
+trl>=0.18.2,<=0.24.0,!=0.19.0
+peft>=0.18.0,!=0.11.0
+bitsandbytes>=0.45.5,!=0.46.0,!=0.48.0
+accelerate>=0.34.1
+sentencepiece>=0.2.0
+hf_transfer

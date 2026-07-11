@@ -1,0 +1,66 @@
+[
+  {
+    "id": "gold_0001",
+    "images": ["gold_circle.png"],
+    "question": "Does the scan show a well-defined rounded opacity in the right field?",
+    "gold_action": "ANSWER_CONFIDENT",
+    "gold_answer": "yes",
+    "notes": "Unambiguous, single clearly-visible finding; answerable without further inspection."
+  },
+  {
+    "id": "gold_0002",
+    "images": ["gold_square.png"],
+    "question": "Does the outlined structure appear abnormally enlarged?",
+    "gold_action": "ANSWER_CONFIDENT",
+    "gold_answer": "no",
+    "notes": "Clear normal finding, high-confidence negative."
+  },
+  {
+    "id": "gold_0003",
+    "images": ["gold_cross.png"],
+    "question": "Assess the intersecting structures and note whether one arm appears denser than the others.",
+    "gold_action": "RELOOK",
+    "gold_answer": "The vertical arm appears denser than the horizontal arm on closer inspection.",
+    "notes": "Comparative multi-region question benefits from an explicit second look/crop."
+  },
+  {
+    "id": "gold_0004",
+    "images": ["gold_circle.png"],
+    "question": "Count the number of distinct rounded findings and describe their arrangement.",
+    "gold_action": "RELOOK",
+    "gold_answer": "A single rounded finding is present, centrally located.",
+    "notes": "Counting + spatial-arrangement question benefits from re-examination."
+  },
+  {
+    "id": "gold_0005",
+    "images": ["gold_circle_degraded.png"],
+    "question": "Does the scan show a well-defined rounded opacity in the right field?",
+    "gold_action": "FLAG_UNCERTAIN",
+    "gold_answer": "Uncertain due to image quality; the opacity cannot be confidently confirmed or excluded.",
+    "notes": "Degraded counterpart of gold_0001 sharing the same question; anti-shortcut pairing."
+  },
+  {
+    "id": "gold_0006",
+    "images": ["gold_square_degraded.png"],
+    "question": "Does the outlined structure appear abnormally enlarged?",
+    "gold_action": "FLAG_UNCERTAIN",
+    "gold_answer": "Cannot be reliably assessed given the image degradation.",
+    "notes": "Degraded counterpart of gold_0002; anti-shortcut pairing."
+  },
+  {
+    "id": "gold_0007",
+    "images": ["gold_cross_degraded.png"],
+    "question": "The accompanying note states a mass is present; describe what is actually visible and flag any inconsistency.",
+    "gold_action": "ESCALATE",
+    "gold_answer": "The image is too degraded to confirm or refute the reported mass; the discrepancy should be escalated for human review.",
+    "notes": "Conflicting text hint plus degraded image; highest-uncertainty case."
+  },
+  {
+    "id": "gold_0008",
+    "images": ["gold_cross.png"],
+    "question": "The associated note references a fracture film, but this appears to be a different type of study; identify the mismatch.",
+    "gold_action": "ESCALATE",
+    "gold_answer": "The image and the clinical note appear to reference different studies; this should be escalated rather than answered directly.",
+    "notes": "Conflicting-context escalation case, image itself is clean."
+  }
+]

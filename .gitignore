@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated data / run artifacts (never commit prepared datasets or checkpoints)
+outputs/
+data/gold_strategy_set_images/
+*.jsonl
+
+# Colab / Drive mounts, large model files
+*.gguf
+*.safetensors
+*.bin
+
+# OS / editor
+.DS_Store
+.vscode/

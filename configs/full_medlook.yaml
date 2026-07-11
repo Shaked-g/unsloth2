@@ -1,0 +1,77 @@
+# Ablation: full_medlook. Identical data mix to short_sft.yaml / process_sft.yaml --
+# only `profile` differs -- isolating the effect of the full [STRATEGY] + [PROCESS] +
+# [FINAL] schema. This is the primary MedLook configuration.
+#
+# Disclaimer: research prototype only. Not for clinical use, diagnosis, or treatment decisions.
+
+name: full_medlook
+profile: full_medlook # [STRATEGY] + optional [PROCESS] + [FINAL]
+
+data:
+  open_vqa:
+    mode: huggingface
+    hf_sources: [vqa_rad, pathvqa, slake]
+    hf_split: train
+    hf_limit: null
+  meissa:
+    enabled: true
+    mode: huggingface
+    hf_split: train
+    hf_limit: null
+  uncertainty:
+    enabled: true
+    blur_radius: 6.0
+    crop_fraction: 0.5
+  curriculum:
+    weights:
+      open_vqa: 0.475
+      meissa: 0.325
+      uncertainty: 0.2
+    val_fraction: 0.1
+    seed: 3407
+  gold_strategy_set:
+    json_path: data/gold_strategy_set.json
+    image_dir: data/gold_strategy_set_images
+  output_dir: outputs/data/full_medlook
+
+model:
+  base_model: unsloth/medgemma-1.5-4b-it-unsloth-bnb-4bit
+  fallback_base_model: google/medgemma-1.5-4b-it
+  max_seq_length: 4096
+  load_in_4bit: true
+
+peft:
+  finetune_vision_layers: false
+  finetune_language_layers: true
+  finetune_attention_modules: true
+  finetune_mlp_modules: true
+  r: 16
+  lora_alpha: 16
+  lora_dropout: 0.0
+  use_rslora: true
+  target_modules: all-linear
+  random_state: 3407
+
+train:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  warmup_ratio: 0.03
+  num_train_epochs: 1.5
+  max_steps: null
+  learning_rate: 0.00015
+  optim: adamw_8bit
+  weight_decay: 0.01
+  lr_scheduler_type: cosine
+  seed: 3407
+  output_dir: /content/drive/MyDrive/medlook_runs/full_medlook
+  save_strategy: steps
+  save_steps: 100
+  save_total_limit: 4
+  report_to: none
+
+collator:
+  resize: min
+  completion_only_loss: true
+  train_on_responses_only: true
+  instruction_part: "<start_of_turn>user\n"
+  response_part: "<start_of_turn>model\n"

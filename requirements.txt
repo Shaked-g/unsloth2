@@ -1,0 +1,12 @@
+# Core requirements for local pipeline work: data prep, schema, metrics, demo dry-run.
+# No GPU / training deps here — see requirements-colab.txt for that.
+# Disclaimer: research prototype only. Not for clinical use, diagnosis, or treatment decisions.
+
+pillow>=10.0.0
+numpy>=1.26.0,<2.2.0
+pyyaml>=6.0
+datasets>=3.4.1,<4.4.0
+imagehash>=4.3.1
+pytest>=8.0.0
+pytest-cov>=5.0.0
+gradio>=4.44.0

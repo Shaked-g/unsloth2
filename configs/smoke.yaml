@@ -1,0 +1,74 @@
+# Smoke config: tiny fixture-only run used to prove the pipeline is wired correctly.
+# No network access required. Never used to make performance claims.
+# Disclaimer: research prototype only. Not for clinical use, diagnosis, or treatment decisions.
+
+name: smoke
+profile: full_medlook # short_sft | process_sft | full_medlook
+
+data:
+  open_vqa:
+    mode: fixture
+    fixture_path: tests/fixtures/open_vqa_sample.json
+    image_dir: tests/fixtures/images
+  meissa:
+    enabled: true
+    mode: fixture
+    fixture_path: tests/fixtures/meissa_sample.json
+    image_dir: tests/fixtures/images
+  uncertainty:
+    enabled: true
+    blur_radius: 6.0
+    crop_fraction: 0.5
+  curriculum:
+    weights:
+      open_vqa: 0.475
+      meissa: 0.325
+      uncertainty: 0.2
+    val_fraction: 0.2
+    seed: 3407
+  gold_strategy_set:
+    json_path: tests/fixtures/gold_strategy_sample.json
+    image_dir: tests/fixtures/images
+  output_dir: outputs/data/smoke
+
+model:
+  base_model: unsloth/medgemma-1.5-4b-it-unsloth-bnb-4bit
+  fallback_base_model: google/medgemma-1.5-4b-it
+  max_seq_length: 4096
+  load_in_4bit: true
+
+peft:
+  finetune_vision_layers: false
+  finetune_language_layers: true
+  finetune_attention_modules: true
+  finetune_mlp_modules: true
+  r: 16
+  lora_alpha: 16
+  lora_dropout: 0.0
+  use_rslora: true
+  target_modules: all-linear
+  random_state: 3407
+
+train:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 1
+  warmup_ratio: 0.0
+  num_train_epochs: null
+  max_steps: 2
+  learning_rate: 0.00015
+  optim: adamw_8bit
+  weight_decay: 0.01
+  lr_scheduler_type: cosine
+  seed: 3407
+  output_dir: outputs/runs/smoke
+  save_strategy: steps
+  save_steps: 100
+  save_total_limit: 1
+  report_to: none
+
+collator:
+  resize: min
+  completion_only_loss: true
+  train_on_responses_only: true
+  instruction_part: "<start_of_turn>user\n"
+  response_part: "<start_of_turn>model\n"
